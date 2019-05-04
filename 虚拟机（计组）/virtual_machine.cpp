@@ -88,7 +88,7 @@ void jle()
 	if ((NF^OF) | ZF)
 		copy(IR + 23, IR + INSTRUCTION_SIZE, PC);
 	else
-		PC++
+		//转到公操作
 }
 
 void display()
