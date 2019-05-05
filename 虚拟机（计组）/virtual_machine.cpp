@@ -48,16 +48,6 @@ void dtob(int num,int a[])//dec to bin
 		num /= 2;
 	}
 }
-//int reverse_btod(int a[], int size)//高下标的是低位
-//{
-//	int base = 1, result = 0;
-//	for (int i = size-1; i >=0; i--)
-//	{
-//		result += a[i] * base;
-//		base *= 2;
-//	}
-//	return result;
-//}
 void display()
 {
 	cout << "R0:"; print_array(R[0], DATA_SIZE);
@@ -103,9 +93,6 @@ void add(int R0[], int R1[])
 		C1 = (ALU_A[i] & ALU_B[i]) | (C0&(ALU_A[i] ^ ALU_B[i]));
 		C0 = C1;
 	}
-	/*int temp = bin_to_dec(R0, DATA_SIZE) + bin_to_dec(R1, DATA_SIZE);
-	cout << "add结果：" << temp << endl;
-	dtob(temp, R0);*/
 	if (TF) display();
 	
 
@@ -245,7 +232,6 @@ int main()
 
 
 		/*公操作*/
-		//getchar();
 		//判断是否输入
 		if (TF)
 		{
