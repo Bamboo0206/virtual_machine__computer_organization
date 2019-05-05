@@ -2,19 +2,16 @@
 #include<fstream>
 #include<algorithm>
 using namespace std;
-#define M_ROW_SIZE 1024//单位是bit
-#define M_COL_SIZE 8
-#define INSTRUCTION_SIZE 26
-#define DATA_SIZE 8
-#define ADDRESS_SIZE 3
-
-/*MUX使用class？译码器用class？*/
-/*译码器用函数？？*/
+#define M_ROW_SIZE 16//单位是bit
+//#define M_COL_SIZE 8
+#define INSTRUCTION_SIZE 16
+#define DATA_SIZE 16
+#define ADDRESS_SIZE 4
 
 /*全局变量*/
 /*申请M，标志位等*/
-int M[M_ROW_SIZE][M_COL_SIZE];//内存//一半分给程序，一半分给数据？
-char R[4][DATA_SIZE];//寄存器
+int IM[M_ROW_SIZE][INSTRUCTION_SIZE];//内存//一半分给程序，一半分给数据？
+int R[4][DATA_SIZE];//寄存器
 //int DR[DATA_SIZE];//DATA_register
 int AR[ADDRESS_SIZE];//ADDRESS_register
 int IR[INSTRUCTION_SIZE];//INSTRUCTION register
@@ -24,73 +21,34 @@ int DBUS[DATA_SIZE],IBUS[INSTRUCTION_SIZE];//总线
 int ALU_A[DATA_SIZE], ALU_B[DATA_SIZE];
 
 
-int main()
+void print_array(int a[], int size)
 {
-	/*从文件读入程序,写到M*/
-	ifstream f_prog("program.txt", ios::in);
-	if (f_prog)
+	for (int i = 0; i < size; i++)
 	{
-		cout << "文件打开失败！" << endl;
-		exit(0);
+		cout << a[i];
 	}
-	f_prog.seekg(0, fstream::beg);
-	while (f_prog.eof())//??
-	{
-		f_prog>>
-	}
-	cout << "程序载入完成。" << endl;
-
-	cout<<"请设置TF：（0单步执行"
-	/*取指-译码-执行*/
-	while ()
-	{
-		copy(PC, PC + ADDRESS_SIZE, AR);//PC->
-		//AR->M//需要地址译码器？
-
-		
-	}
-
-
-
-}
-void add(char R0[], char R1[])
-{
-	copy(R0, R0 + DATA_SIZE, ALU_A);//R0->MUX_A->ALU
-	copy(R1, R1 + DATA_SIZE, ALU_B);//R1->MUX_B->ALU
-	//ALU->DBUS
-	int C = 0;//进位
-	for (int i = 0; i < DATA_SIZE; i++)//全加器
-	{
-		DBUS[i] = ALU_A[i] ^ ALU_B[i] ^ C;
-		C = (ALU_A[i] & ALU_B[i]) | (C&(ALU_A[i] ^ ALU_B[i]));
-	}
-	if (TF) display();
-	
-	/*时钟脉冲怎么体现？？？？？？？*/
-	copy(DBUS, DBUS + DATA_SIZE, R0);//DBUS->R0
-	/*标志位*/
-	if (C) CF = 1;//进位?????????
-	if (atoi(R0) - atoi(R1) == 0)
-		ZF = 1;
-	else
-		ZF = 0;
-}
-void cmp(char R1[],char R2[])//比较两个寄存器，大小为DATA_SIZE
-{
-	if (atoi(R1) - atoi(R2) == 0)
-		ZF = 1;
-	else
-		ZF = 0;
-	//CF????
-}
-void jle()
-{
-	if ((NF^OF) | ZF)
-		copy(IR + 23, IR + INSTRUCTION_SIZE, PC);
-	else
-		//转到公操作
 }
 
+int bin_to_dec(int a[], int size)
+{
+	int base = 1, result = 0;
+	for (int i = 0; i < size; i++)
+	{
+		result += a[i] * base;
+		base *=2;
+	}
+	return result;
+}
+//int reverse_btod(int a[], int size)//高下标的是低位
+//{
+//	int base = 1, result = 0;
+//	for (int i = size-1; i >=0; i--)
+//	{
+//		result += a[i] * base;
+//		base *= 2;
+//	}
+//	return result;
+//}
 void display()
 {
 	cout << "R0:"; print_array(R[0], DATA_SIZE);
@@ -103,25 +61,173 @@ void display()
 
 	cout << "\nAR:"; print_array(AR, ADDRESS_SIZE);
 	cout << "\nIR:"; print_array(IR, INSTRUCTION_SIZE);
-	
+
 	cout << "\nPC:"; print_array(PC, ADDRESS_SIZE);
 	cout << "\nDBUS:"; print_array(DBUS, DATA_SIZE);
 	cout << "\nIBUS:"; print_array(IBUS, INSTRUCTION_SIZE);
 
-	cout << "ZF:" << ZF << "CF:" << CF << "OF:" << OF << "NF:" << NF << endl;
+	cout << "\nZF:" << ZF << "  CF:" << CF << "  OF:" << OF << "  NF:" << NF << endl;
 	getchar();
 }
-void print_array(int a[], int size)
+void my_copy(int *a, int *b, int *c)//[a,b)拷到c
 {
-	for (int i = 0; i < size; i++)
+	if (!c) cout << "访问空指针" << endl;
+	for (int i = 0; a < b; a++)
 	{
-		cout << a[i];
+		c[i] = *a;
+		i++;
 	}
 }
-void print_array(char a[], int size)
+
+
+void add(int R0[], int R1[])
 {
-	for (int i = 0; i < size; i++)
+
+	my_copy(R0, R0 + DATA_SIZE, ALU_A);//R0->MUX_A->ALU
+	my_copy(R1, R1 + DATA_SIZE, ALU_B);//R1->MUX_B->ALU
+	//ALU->DBUS
+	int C0 = 0,C1=0;//进位
+	for (int i = 0; i < DATA_SIZE; i++)//全加器
 	{
-		cout << a[i];
+		DBUS[i] = ALU_A[i] ^ ALU_B[i] ^ C0;
+		C1 = (ALU_A[i] & ALU_B[i]) | (C0&(ALU_A[i] ^ ALU_B[i]));
+		C0 = C1;
+	}
+	if (TF) display();
+	
+
+	my_copy(DBUS, DBUS + DATA_SIZE, R0);//DBUS->R0
+	/*标志位*/
+	CF = 1;//进位?????????
+	if (bin_to_dec(R0, DATA_SIZE) == 0)
+		ZF = 1;
+	else
+		ZF = 0;
+	if (TF) display();
+}
+void cmp(int R0[],int R1[])//比较两个寄存器，大小为DATA_SIZE
+{
+	if (bin_to_dec(R0, DATA_SIZE) - bin_to_dec(R1, DATA_SIZE) == 0)
+		ZF = 1;
+	else
+		ZF = 0;
+	//CF????
+	if (TF) display();
+}
+void jle()
+{
+	if ((NF^OF) | ZF)
+	{
+		my_copy(IR + 4, IR + 8, PC);
+	}
+	if (TF) display();
+}
+void mov()
+{
+	int *Rx=NULL;
+	if (bin_to_dec(IR + 4, 4) == 0) Rx = R[0];
+	else if (bin_to_dec(IR + 4, 4) == 1) Rx = R[1];
+	else if (bin_to_dec(IR + 4, 4) == 2) Rx = R[2];
+	else if (bin_to_dec(IR + 4, 4) == 3) Rx = R[3];
+	else cout << "不存在的寄存器！\n";
+	//for (int i = DATA_SIZE-1; i > 7; i--)R[i] = 0;//0扩展到16位
+	my_copy(IR + 8, IR + 16, Rx);//将立即数送到R寄存器
+	if (TF) display();
+}
+void pcadd()
+{
+	int C0 = 1,C1=0;//进位
+	for (int i = 0; i < ADDRESS_SIZE; i++)//全加器
+	{
+		C1 = PC[i] & C0;
+		PC[i] = PC[i] ^ C0;
+		C0 = C1;
 	}
 }
+void jmp()//无条件转跳
+{
+	my_copy(IR + 4, IR +8, PC);//修改PC内的地址
+	if (TF) display();
+}
+
+
+
+int main()
+{
+	/*从文件读入程序,写到M*/
+	ifstream f_prog("program.txt", ios::in);
+	if (!f_prog)
+	{
+		cout << "文件打开失败！" << endl;
+		exit(0);
+	}
+	f_prog.seekg(0, fstream::beg);
+	char ch;
+	for (int row = 0, col = 0; !f_prog.eof();)
+	{
+		//f_prog >> ch;
+		f_prog.get(ch);
+		if (ch != '\n')
+		{
+			IM[row][col] = ch - '0';
+			col++;
+		}
+		else
+		{
+			row++;
+			col = 0;
+		}
+	}
+	cout << "程序载入完成。" << endl;
+
+	cout << "请设置TF：（1）单步调试，（0）全部执行\n";
+	cin >> TF;
+
+	/*初始化*/
+	for (int i = 0; i < ADDRESS_SIZE; i++) PC[i] = 0;//初始化PC为第一条指令地址
+	for (int k = 0; k < 4; k++)
+		for (int i = 0; i < DATA_SIZE; i++)
+			R[k][i] = 0;
+
+	/*取指-译码-执行*/
+	while (true)
+	{
+		/*取指令*/
+		int row = bin_to_dec(PC, ADDRESS_SIZE);
+		my_copy(IM[row], IM[row] + INSTRUCTION_SIZE, IR);//PC->M->IR
+		pcadd();//PC+1->PC
+
+		/*执行*/
+		if (bin_to_dec(IR, 4) == 1) mov();/*mov*/
+		else if (bin_to_dec(IR, 4) == 2) jmp();/*jmp*/
+		else if (bin_to_dec(IR, 4) == 3)//add	
+		{
+			if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 1) add(R[0], R[1]);
+			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 2) add(R[0], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 3) add(R[0], R[3]);
+			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 2) add(R[1], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 3) add(R[1], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 2 && bin_to_dec(IR + 4, 2) == 3) add(R[2], R[3]);
+		}
+		else if (bin_to_dec(IR, 4) == 4)
+		{
+			if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 1) cmp(R[0], R[1]);
+			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 2) cmp(R[0], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 3) cmp(R[0], R[3]);
+			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 2) cmp(R[1], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 3) cmp(R[1], R[2]);
+			else if (bin_to_dec(IR + 4, 2) == 2 && bin_to_dec(IR + 4, 2) == 3) cmp(R[2], R[3]);
+		}
+		else if (bin_to_dec(IR, 4) == 5) jle();
+		else cout << "不存在的指令\n";
+
+
+		/*公操作*/
+		getchar();
+		//判断是否输入？？io？？
+	}
+
+
+	return 0;
+}
+
