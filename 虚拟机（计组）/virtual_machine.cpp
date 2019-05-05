@@ -39,6 +39,15 @@ int bin_to_dec(int a[], int size)
 	}
 	return result;
 }
+void dtob(int num,int a[])//dec to bin
+{
+	int base = 1, result = 0;
+	for (int i = 0; num!=0; i++)
+	{
+		a[i] = num % 2;
+		num /= 2;
+	}
+}
 //int reverse_btod(int a[], int size)//高下标的是低位
 //{
 //	int base = 1, result = 0;
@@ -67,7 +76,7 @@ void display()
 	cout << "\nIBUS:"; print_array(IBUS, INSTRUCTION_SIZE);
 
 	cout << "\nZF:" << ZF << "  CF:" << CF << "  OF:" << OF << "  NF:" << NF << endl;
-	getchar();
+	//getchar();
 }
 void my_copy(int *a, int *b, int *c)//[a,b)拷到c
 {
@@ -82,10 +91,11 @@ void my_copy(int *a, int *b, int *c)//[a,b)拷到c
 
 void add(int R0[], int R1[])
 {
-
+	cout << "add Rx,Ry\n"
+		<< "R0->MUX_A->ALU\tR1->MUX_B->ALU\tALU->DBUS\n";
 	my_copy(R0, R0 + DATA_SIZE, ALU_A);//R0->MUX_A->ALU
 	my_copy(R1, R1 + DATA_SIZE, ALU_B);//R1->MUX_B->ALU
-	//ALU->DBUS
+	/*ALU->DBUS*/
 	int C0 = 0,C1=0;//进位
 	for (int i = 0; i < DATA_SIZE; i++)//全加器
 	{
@@ -93,29 +103,40 @@ void add(int R0[], int R1[])
 		C1 = (ALU_A[i] & ALU_B[i]) | (C0&(ALU_A[i] ^ ALU_B[i]));
 		C0 = C1;
 	}
+	/*int temp = bin_to_dec(R0, DATA_SIZE) + bin_to_dec(R1, DATA_SIZE);
+	cout << "add结果：" << temp << endl;
+	dtob(temp, R0);*/
 	if (TF) display();
 	
 
 	my_copy(DBUS, DBUS + DATA_SIZE, R0);//DBUS->R0
 	/*标志位*/
-	CF = 1;//进位?????????
+	CF = C1;//进位?????????
 	if (bin_to_dec(R0, DATA_SIZE) == 0)
 		ZF = 1;
 	else
 		ZF = 0;
+	cout << "add:   DBUS->R0\n";
 	if (TF) display();
 }
 void cmp(int R0[],int R1[])//比较两个寄存器，大小为DATA_SIZE
 {
+	cout << "cmp Rx,Ry\n";
 	if (bin_to_dec(R0, DATA_SIZE) - bin_to_dec(R1, DATA_SIZE) == 0)
 		ZF = 1;
 	else
 		ZF = 0;
+	if (bin_to_dec(R0, DATA_SIZE) - bin_to_dec(R1, DATA_SIZE) < 0)
+		NF = 1;
+	else
+		NF = 0;
+
 	//CF????
 	if (TF) display();
 }
 void jle()
 {
+	cout << "jle\n";
 	if ((NF^OF) | ZF)
 	{
 		my_copy(IR + 4, IR + 8, PC);
@@ -124,6 +145,7 @@ void jle()
 }
 void mov()
 {
+	cout << "mov\n";
 	int *Rx=NULL;
 	if (bin_to_dec(IR + 4, 4) == 0) Rx = R[0];
 	else if (bin_to_dec(IR + 4, 4) == 1) Rx = R[1];
@@ -146,6 +168,7 @@ void pcadd()
 }
 void jmp()//无条件转跳
 {
+	cout << "jmp\n";
 	my_copy(IR + 4, IR +8, PC);//修改PC内的地址
 	if (TF) display();
 }
@@ -194,36 +217,35 @@ int main()
 	{
 		/*取指令*/
 		int row = bin_to_dec(PC, ADDRESS_SIZE);
-		my_copy(IM[row], IM[row] + INSTRUCTION_SIZE, IR);//PC->M->IR
+		my_copy(IM[row], IM[row] + INSTRUCTION_SIZE, IBUS);//PC->M->IBUS
+		my_copy(IBUS, IBUS + INSTRUCTION_SIZE, IR);//IBUS->IR
 		pcadd();//PC+1->PC
 
 		/*执行*/
-		if (bin_to_dec(IR, 4) == 1) mov();/*mov*/
-		else if (bin_to_dec(IR, 4) == 2) jmp();/*jmp*/
-		else if (bin_to_dec(IR, 4) == 3)//add	
+		int OP = bin_to_dec(IR, 4);
+		if (OP == 1) mov();/*mov*/
+		else if (OP == 2) jmp();/*jmp*/
+		else if (OP == 3)//add	
 		{
-			if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 1) add(R[0], R[1]);
-			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 2) add(R[0], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 3) add(R[0], R[3]);
-			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 2) add(R[1], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 3) add(R[1], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 2 && bin_to_dec(IR + 4, 2) == 3) add(R[2], R[3]);
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			add(R[x], R[y]);
 		}
-		else if (bin_to_dec(IR, 4) == 4)
+		else if (OP == 4)
 		{
-			if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 1) cmp(R[0], R[1]);
-			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 2) cmp(R[0], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 0 && bin_to_dec(IR + 4, 2) == 3) cmp(R[0], R[3]);
-			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 2) cmp(R[1], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 1 && bin_to_dec(IR + 4, 2) == 3) cmp(R[1], R[2]);
-			else if (bin_to_dec(IR + 4, 2) == 2 && bin_to_dec(IR + 4, 2) == 3) cmp(R[2], R[3]);
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			cmp(R[x], R[y]);
 		}
-		else if (bin_to_dec(IR, 4) == 5) jle();
+		else if (OP == 5) jle();
+		else if (OP == 15)
+		{
+			cout << "程序运行结束。结果为：" << bin_to_dec(R[0], DATA_SIZE) << endl;
+			return 0;
+		}
 		else cout << "不存在的指令\n";
 
 
 		/*公操作*/
-		getchar();
+		//getchar();
 		//判断是否输入？？io？？
 	}
 
