@@ -246,7 +246,24 @@ int main()
 
 		/*公操作*/
 		//getchar();
-		//判断是否输入？？io？？
+		//判断是否输入
+		if (TF)
+		{
+			cout << "是否修改寄存器的值（0不修改/1修改）：";
+			int change = 0;
+			cin >> change;
+			if (change)
+			{
+				int x = 0;
+				cout << "请输入修改的寄存器的编号：";
+				cin >> change;
+				string data;
+				cout << "请输入修改的值（16位）：";
+				cin >> change;
+				for (int i = 0; i < DATA_SIZE; i++)
+					R[x][i] = data[i];
+			}
+		}
 	}
 
 
