@@ -1,4 +1,5 @@
 #include<iostream>
+#include<string>
 #include<fstream>
 #include<algorithm>
 using namespace std;
@@ -81,8 +82,8 @@ void my_copy(int *a, int *b, int *c)//[a,b)拷到c
 
 void add(int R0[], int R1[])
 {
-	cout << "add Rx,Ry\n"
-		<< "R0->MUX_A->ALU\tR1->MUX_B->ALU\tALU->DBUS\n";
+	cout << "add Rx,Ry\n";
+		//<< "R0->MUX_A->ALU\tR1->MUX_B->ALU\tALU->DBUS\n";
 	my_copy(R0, R0 + DATA_SIZE, ALU_A);//R0->MUX_A->ALU
 	my_copy(R1, R1 + DATA_SIZE, ALU_B);//R1->MUX_B->ALU
 	/*ALU->DBUS*/
@@ -93,17 +94,17 @@ void add(int R0[], int R1[])
 		C1 = (ALU_A[i] & ALU_B[i]) | (C0&(ALU_A[i] ^ ALU_B[i]));
 		C0 = C1;
 	}
-	if (TF) display();
+	//if (TF) display();
 	
 
 	my_copy(DBUS, DBUS + DATA_SIZE, R0);//DBUS->R0
 	/*标志位*/
-	CF = C1;//进位?????????
+	CF = C1;//进位
 	if (bin_to_dec(R0, DATA_SIZE) == 0)
 		ZF = 1;
 	else
 		ZF = 0;
-	cout << "add:   DBUS->R0\n";
+	//cout << "DBUS->R0\n";
 	if (TF) display();
 }
 void cmp(int R0[],int R1[])//比较两个寄存器，大小为DATA_SIZE
@@ -118,7 +119,6 @@ void cmp(int R0[],int R1[])//比较两个寄存器，大小为DATA_SIZE
 	else
 		NF = 0;
 
-	//CF????
 	if (TF) display();
 }
 void jle()
@@ -143,7 +143,7 @@ void mov()
 	my_copy(IR + 8, IR + 16, Rx);//将立即数送到R寄存器
 	if (TF) display();
 }
-void pcadd()
+void pcadd()//PC++
 {
 	int C0 = 1,C1=0;//进位
 	for (int i = 0; i < ADDRESS_SIZE; i++)//全加器
@@ -241,13 +241,13 @@ int main()
 			if (change)
 			{
 				int x = 0;
-				cout << "请输入修改的寄存器的编号：";
-				cin >> change;
+				cout << "请输入修改的寄存器的编号(0~3)：";
+				cin >> x;
 				string data;
-				cout << "请输入修改的值（16位）：";
-				cin >> change;
+				cout << "请输入修改的值（16位二进制，左端为最低位）：";
+				cin >> data;
 				for (int i = 0; i < DATA_SIZE; i++)
-					R[x][i] = data[i];
+					R[x][i] = data[i]-'0';
 			}
 		}
 	}
