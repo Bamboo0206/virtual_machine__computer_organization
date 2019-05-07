@@ -11,7 +11,8 @@ using namespace std;
 
 /*全局变量*/
 /*申请M，标志位等*/
-int IM[M_ROW_SIZE][INSTRUCTION_SIZE];//内存//一半分给程序，一半分给数据？
+int IM[M_ROW_SIZE][INSTRUCTION_SIZE];//内存：指存
+int DM[M_ROW_SIZE][DATA_SIZE];//内存：数存
 int R[4][DATA_SIZE];//寄存器
 //int DR[DATA_SIZE];//DATA_register
 int AR[ADDRESS_SIZE];//ADDRESS_register
@@ -106,6 +107,43 @@ void add(int R0[], int R1[])
 		ZF = 0;
 	//cout << "DBUS->R0\n";
 	if (TF) display();
+}
+void my_or (int R0[], int R1[])//计算R0 | R1，结果保存在R0
+
+{
+	for (int i = 0; i < DATA_SIZE; i++)
+	{
+		R0[i] = R0[i] | R1[i];
+	}
+}
+void my_xor(int R0[], int R1[])//计算R0^R1，结果保存在R0
+
+{
+	for (int i = 0; i < DATA_SIZE; i++)
+	{
+		R0[i] = R0[i] ^ R1[i];
+	}
+}
+void my_not(int R0[])//R0各位取反，结果保存在R0
+{
+	for (int i = 0; i < DATA_SIZE; i++)
+	{
+		R0[i] = R0[i] ^ 1;
+	}
+}
+void sub(int R0[], int R1[])//计算R0-R1，结果保存在R0
+{
+	int temp = bin_to_dec(R0, DATA_SIZE) - bin_to_dec(R1, DATA_SIZE);
+	for (int i = 0; temp > 0; i++)
+	{
+		R0[i] = temp % 2;
+		temp /= 2;
+	}
+}
+void sto(int R0[], int R1[])//将R0储存到R1指向的内存单元
+{
+	int loc = bin_to_dec(R0, DATA_SIZE);
+	my_copy(R1, R1 + DATA_SIZE, DM[loc]);
 }
 void cmp(int R0[],int R1[])//比较两个寄存器，大小为DATA_SIZE
 {
@@ -217,13 +255,38 @@ int main()
 			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
 			add(R[x], R[y]);
 		}
-		else if (OP == 4)
+		else if (OP == 4)//cmp
 		{
 			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
 			cmp(R[x], R[y]);
 		}
 		else if (OP == 5) jle();
-		else if (OP == 15)
+		else if (OP == 6)//sto
+		{
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			sto(R[x], R[y]);
+		}
+		else if (OP == 7)//sub
+		{
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			sub(R[x], R[y]);
+		}
+		else if (OP == 8)//xor
+		{
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			my_xor(R[x], R[y]);
+		}
+		else if (OP == 9)//or
+		{
+			int x = bin_to_dec(IR + 4, 2), y = bin_to_dec(IR + 6, 8);
+			my_or(R[x], R[y]);
+		}
+		else if (OP == 9)//not
+		{
+			int x = bin_to_dec(IR + 4, 2);
+			my_not(R[x]);
+		}
+		else if (OP == 15)//ret
 		{
 			cout << "程序运行结束。结果为：" << bin_to_dec(R[0], DATA_SIZE) << endl;
 			return 0;
