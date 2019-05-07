@@ -63,7 +63,7 @@ void display()
 	cout << "\nIR:"; print_array(IR, INSTRUCTION_SIZE);
 
 	cout << "\nPC:"; print_array(PC, ADDRESS_SIZE);
-	cout << "\nDBUS:"; print_array(DBUS, DATA_SIZE);
+	cout << "\nDBUS(DR):"; print_array(DBUS, DATA_SIZE);
 	cout << "\nIBUS:"; print_array(IBUS, INSTRUCTION_SIZE);
 
 	cout << "\nZF:" << ZF << "  CF:" << CF << "  OF:" << OF << "  NF:" << NF << endl;
